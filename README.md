@@ -32,7 +32,7 @@ purely on local inputs and writes a local OCI layout.
 ## Install
 
 ```sh
-go install github.com/mkosiarc/gobsi/cmd/gobsi@latest
+go install github.com/konflux-ci/gobsi/cmd/gobsi@latest
 ```
 
 Or build from source:
@@ -85,7 +85,7 @@ skopeo copy oci:./source-image docker://registry.example.com/app:latest-source
 The build logic lives in `pkg/` and can be called directly:
 
 ```go
-import "github.com/mkosiarc/gobsi/pkg/gobsi"
+import "github.com/konflux-ci/gobsi/pkg/gobsi"
 
 err := gobsi.BuildSourceImage(gobsi.BuildConfig{
     SRPMDir:   "./srpms",

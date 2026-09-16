@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/mkosiarc/gobsi/pkg/pathutil"
-	"github.com/mkosiarc/gobsi/pkg/source"
+	"github.com/konflux-ci/gobsi/pkg/pathutil"
+	"github.com/konflux-ci/gobsi/pkg/source"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mkosiarc/gobsi/pkg/source"
+	"github.com/konflux-ci/gobsi/pkg/source"
 )
 
 func TestProcessExtraSrcDirs(t *testing.T) {

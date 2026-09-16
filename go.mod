@@ -1,4 +1,4 @@
-module github.com/mkosiarc/gobsi
+module github.com/konflux-ci/gobsi
 
 go 1.25.11
 

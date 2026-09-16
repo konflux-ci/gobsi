@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/mkosiarc/gobsi/pkg/oci"
-	"github.com/mkosiarc/gobsi/pkg/source"
+	"github.com/konflux-ci/gobsi/pkg/oci"
+	"github.com/konflux-ci/gobsi/pkg/source"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	log "github.com/sirupsen/logrus"
