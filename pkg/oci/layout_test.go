@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mkosiarc/gobsi/pkg/oci"
+	"github.com/konflux-ci/gobsi/pkg/oci"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

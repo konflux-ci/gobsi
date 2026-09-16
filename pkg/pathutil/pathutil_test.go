@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/mkosiarc/gobsi/pkg/pathutil"
+	"github.com/konflux-ci/gobsi/pkg/pathutil"
 )
 
 func TestLessSegmentOrder(t *testing.T) {

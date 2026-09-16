@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/mkosiarc/gobsi/pkg/gobsi"
+	"github.com/konflux-ci/gobsi/pkg/gobsi"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
