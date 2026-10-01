@@ -195,6 +195,37 @@ func TestProcessExtraSrcDirsWithSymlink(t *testing.T) {
 	}
 }
 
+func TestProcessExtraSrcDirsDeterministic(t *testing.T) {
+	// The same source content must always produce the same checksum (and thus
+	// the same blob digest), even from a different location on disk. This is
+	// what lets deduplication key on the artifact hash. Fixture deliberately
+	// varies file modes and includes a symlink so the determinism check
+	// exercises the mode, type, and linkname header fields (not just names and
+	// contents), since the checksum covers the whole tar.
+	mk := func() string {
+		d := t.TempDir()
+		os.MkdirAll(filepath.Join(d, "sub"), 0o755)
+		os.WriteFile(filepath.Join(d, "b.txt"), []byte("bbb"), 0o644)
+		os.WriteFile(filepath.Join(d, "a.txt"), []byte("aaa"), 0o600)
+		os.WriteFile(filepath.Join(d, "sub", "c.txt"), []byte("ccc"), 0o644)
+		os.Symlink("a.txt", filepath.Join(d, "link"))
+		return d
+	}
+
+	a1, err := source.ProcessExtraSrcDirs([]string{mk()}, t.TempDir())
+	if err != nil {
+		t.Fatalf("first build failed: %v", err)
+	}
+	a2, err := source.ProcessExtraSrcDirs([]string{mk()}, t.TempDir())
+	if err != nil {
+		t.Fatalf("second build failed: %v", err)
+	}
+
+	if a1[0].Metadata.Checksum != a2[0].Metadata.Checksum {
+		t.Errorf("non-deterministic checksum: %s != %s", a1[0].Metadata.Checksum, a2[0].Metadata.Checksum)
+	}
+}
+
 func TestProcessExtraSrcDirsEmpty(t *testing.T) {
 	artifacts, err := source.ProcessExtraSrcDirs(nil, t.TempDir())
 	if err != nil {
