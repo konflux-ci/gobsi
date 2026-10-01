@@ -18,6 +18,7 @@ func main() {
 
 	rootCmd.Flags().StringP("srpm-dir", "s", "", "directory of *.src.rpm files to add (searched recursively)")
 	rootCmd.Flags().StringArrayP("extra-src-dir", "e", nil, "extra source directory to add as a layer")
+	rootCmd.Flags().StringArrayP("merge", "m", nil, "source OCI image layout directory to merge (layers are deduplicated)")
 	rootCmd.Flags().StringP("output", "o", "", "output OCI image layout directory (required)")
 	rootCmd.Flags().BoolP("debug", "d", false, "enable debug logging")
 	rootCmd.MarkFlagRequired("output")
@@ -38,11 +39,13 @@ func run(cmd *cobra.Command, args []string) error {
 
 	srpmDir, _ := cmd.Flags().GetString("srpm-dir")
 	extraDirs, _ := cmd.Flags().GetStringArray("extra-src-dir")
+	mergeDirs, _ := cmd.Flags().GetStringArray("merge")
 	outputDir, _ := cmd.Flags().GetString("output")
 
 	return gobsi.BuildSourceImage(gobsi.BuildConfig{
 		SRPMDir:   srpmDir,
 		ExtraDirs: extraDirs,
+		MergeDirs: mergeDirs,
 		OutputDir: outputDir,
 	})
 }

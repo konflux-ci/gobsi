@@ -21,10 +21,37 @@ Given one or more inputs, `gobsi` produces an OCI image layout directory:
   no filtering) into a reproducible tar and added as a layer. Typical contents
   are things like vendored dependencies, patches, build scripts, licenses, or
   the source of software that isn't shipped as an RPM.
+- **Source images to merge** — one or more existing OCI source-image layouts
+  (built by `gobsi` or BSI). Their layers are copied into the output and
+  deduplicated, so the same source is never carried twice. This can be combined
+  with fresh SRPM/extra-source inputs, or used on its own to combine several
+  existing source images into one.
 
-At least one input (SRPMs or an extra source directory) is required. The result
-is a spec-compliant OCI image layout with `oci-layout`, `index.json`, and a
-`blobs/sha256/` store.
+At least one input (SRPMs, an extra source directory, or an image to merge) is
+required. The result is a spec-compliant OCI image layout with `oci-layout`,
+`index.json`, and a `blobs/sha256/` store.
+
+### Deduplication
+
+Layers are deduplicated by the checksum of the artifact packed inside them, not
+by the outer layer digest. BSI and `gobsi` pack the same artifact into
+differently-built layer tars, so their outer digests differ even when the
+artifact inside is byte-identical; a registry round-trip can likewise recompress
+a layer and change its digest. Keying on the artifact's own checksum sees
+through both, where the outer digest would hide the duplicate.
+
+What that checksum covers determines the scope:
+
+- **SRPMs** are keyed on the SRPM file's own hash, which is identical across
+  tools, so an SRPM is collapsed whether it was built by `gobsi` or by BSI.
+- **Extra sources** are keyed on `gobsi`'s deterministic tar hash, which is
+  unique to `gobsi`, so extra sources only deduplicate against other
+  `gobsi`-built layers.
+
+Deduplication applies both among freshly built layers and to layers pulled in
+via `--merge`. Merged layers come first and stay in their original order, as a
+child image keeps its parent's layers intact and appends its own on top; when
+the same artifact appears on both sides, the parent's copy is the one kept.
 
 `gobsi` does no network I/O: it does not pull, push, or fetch SRPMs. It operates
 purely on local inputs and writes a local OCI layout.
@@ -44,7 +71,7 @@ go build -o gobsi ./cmd/gobsi
 ## Usage
 
 ```
-gobsi -o <output-dir> [-s <srpm-dir>] [-e <extra-src-dir>]... [-d]
+gobsi -o <output-dir> [-s <srpm-dir>] [-e <extra-src-dir>]... [-m <image-dir>]... [-d]
 ```
 
 | Flag | Short | Description |
@@ -52,7 +79,10 @@ gobsi -o <output-dir> [-s <srpm-dir>] [-e <extra-src-dir>]... [-d]
 | `--output` | `-o` | Output OCI image layout directory (**required**) |
 | `--srpm-dir` | `-s` | Directory of `*.src.rpm` files to add (searched recursively) |
 | `--extra-src-dir` | `-e` | Extra source directory to add as a layer |
+| `--merge` | `-m` | Source OCI image layout directory to merge (layers are deduplicated) |
 | `--debug` | `-d` | Enable debug logging |
+
+`--extra-src-dir` and `--merge` may each be repeated to add several.
 
 ### Examples
 
@@ -74,6 +104,18 @@ Combine both:
 gobsi -s ./srpms -e ./vendored-sources -o ./source-image
 ```
 
+Merge existing source images into a fresh build, deduplicating shared source:
+
+```sh
+gobsi -s ./srpms -m ./base-source-image -o ./source-image
+```
+
+Combine several existing source images into one, with no fresh inputs:
+
+```sh
+gobsi -m ./source-image-a -m ./source-image-b -o ./combined-source-image
+```
+
 The output directory can then be consumed by any OCI-aware tool, e.g.:
 
 ```sh
@@ -90,6 +132,7 @@ import "github.com/konflux-ci/gobsi/pkg/gobsi"
 err := gobsi.BuildSourceImage(gobsi.BuildConfig{
     SRPMDir:   "./srpms",
     ExtraDirs: []string{"./vendored-sources"},
+    MergeDirs: []string{"./base-source-image"},
     OutputDir: "./source-image",
 })
 ```
@@ -109,6 +152,10 @@ err := gobsi.BuildSourceImage(gobsi.BuildConfig{
   zeroed mtimes/ownership, and deterministic ordering so builds are reproducible.
 - **Artifact metadata** is emitted as `source.artifact.*` OCI descriptor
   annotations on each layer.
+- **Merging** (`pkg/oci/merge.go`) — loads an existing OCI source-image layout,
+  copies its layer blobs into the output, and recovers each layer's inner
+  artifact hash (decompressing gzip layers, e.g. images recompressed by a
+  registry) so it can be deduplicated against everything already added.
 
 ### Reproducibility
 
@@ -130,7 +177,7 @@ normalized. The same inputs yield byte-identical tars.
 cmd/gobsi        CLI entry point
 pkg/gobsi        build orchestration (the public API)
 pkg/source       source drivers: SRPM and extra-source-dir → Artifacts
-pkg/oci          OCI layout, layer tars, config/manifest/index
+pkg/oci          OCI layout, layer tars, config/manifest/index, image merging
 pkg/pathutil     path-segment ordering for deterministic tars
 test/integration end-to-end build test
 ```
