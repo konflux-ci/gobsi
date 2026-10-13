@@ -139,12 +139,12 @@ err := gobsi.BuildSourceImage(gobsi.BuildConfig{
 
 ## Implementation notes
 
-- **Source types** (`pkg/source`) — each input kind produces `Artifact`s with
+- **Source types** (`internal/source`) — each input kind produces `Artifact`s with
   their own `DriverName` (`rpm_dir`, `extra_src_dir`) and metadata. SRPM metadata
   is read from the RPM header via
   [`cavaliergopher/rpm`](https://github.com/cavaliergopher/rpm); the whole file
   is also hashed so every artifact carries a checksum.
-- **OCI layout** (`pkg/oci`) — builds the layout, per-artifact layer tars, config,
+- **OCI layout** (`internal/oci`) — builds the layout, per-artifact layer tars, config,
   manifest, and index using the official
   [`opencontainers/image-spec`](https://github.com/opencontainers/image-spec)
   Go types. Each layer tar mirrors the content layout BSI produces
@@ -152,7 +152,7 @@ err := gobsi.BuildSourceImage(gobsi.BuildConfig{
   zeroed mtimes/ownership, and deterministic ordering so builds are reproducible.
 - **Artifact metadata** is emitted as `source.artifact.*` OCI descriptor
   annotations on each layer.
-- **Merging** (`pkg/oci/merge.go`) — loads an existing OCI source-image layout,
+- **Merging** (`internal/oci/merge.go`) — loads an existing OCI source-image layout,
   copies its layer blobs into the output, and recovers each layer's inner
   artifact hash (decompressing gzip layers, e.g. images recompressed by a
   registry) so it can be deduplicated against everything already added.
@@ -174,20 +174,20 @@ normalized. The same inputs yield byte-identical tars.
 ### Repository layout
 
 ```
-cmd/gobsi        CLI entry point
-pkg/gobsi        build orchestration (the public API)
-pkg/source       source drivers: SRPM and extra-source-dir → Artifacts
-pkg/oci          OCI layout, layer tars, config/manifest/index, image merging
-pkg/pathutil     path-segment ordering for deterministic tars
-test/integration end-to-end build test
+cmd/gobsi         CLI entry point
+internal/oci      OCI layout, layer tars, config/manifest/index, image merging
+internal/pathutil path-segment ordering for deterministic tars
+internal/source   source drivers: SRPM and extra-source-dir → Artifacts
+pkg/gobsi         build orchestration (the public API)
+test/integration  end-to-end build test
 ```
 
 ### Testing
 
 ```sh
-go test ./...              # run the whole suite
-go test ./pkg/...          # unit tests only (no external tools needed)
-go test ./test/integration # integration test only (needs rpmbuild and tar)
+go test ./...                      # run the whole suite
+go test ./pkg/... ./internal/...   # unit tests only (no external tools needed)
+go test ./test/integration         # integration test only (needs rpmbuild and tar)
 ```
 
 The suite has two layers:

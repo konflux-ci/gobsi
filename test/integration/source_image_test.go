@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/konflux-ci/gobsi/internal/oci"
 	"github.com/konflux-ci/gobsi/pkg/gobsi"
-	"github.com/konflux-ci/gobsi/pkg/oci"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/konflux-ci/gobsi/pkg/oci"
-	"github.com/konflux-ci/gobsi/pkg/source"
+	"github.com/konflux-ci/gobsi/internal/oci"
+	"github.com/konflux-ci/gobsi/internal/source"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
